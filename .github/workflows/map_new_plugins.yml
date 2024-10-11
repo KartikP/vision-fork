@@ -83,8 +83,8 @@ jobs:
           PR_NUMBER="${{ github.event.number }}"
           PLUGIN_INFO=$(echo "$PLUGIN_INFO" | jq -c ". + {pr_number: \"$PR_NUMBER\"}")
 
-          echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
-          echo "PLUGIN_INFO is $PLUGIN_INFO"
+          echo "PLUGIN_INFO=$PLUGIN_INFO"
+          echo "::set-output name=plugin_info::$PLUGIN_INFO"
 
       - name: Extract new_models and pr_number
         run: |
@@ -92,8 +92,10 @@ jobs:
           PLUGIN_INFO="${PLUGIN_INFO}"
           NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models')
           PR_NUMBER=$(echo "$PLUGIN_INFO" | jq -r '.pr_number')
-          echo "NEW_MODELS=$NEW_MODELS" >> $GITHUB_OUTPUT
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "NEW_MODELS=$NEW_MODELS"
+          echo "PR_NUMBER=$PR_NUMBER"
+          echo "::set-output name=new_models::$NEW_MODELS"
+          echo "::set-output name=pr_number::$PR_NUMBER"
 
       - name: Trigger Jenkins
         env:
@@ -101,8 +103,8 @@ jobs:
           JENKINS_USER_API: ${{ secrets.JENKINS_USER_API }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
-          NEW_MODELS: ${{ env.NEW_MODELS }}
-          PR_NUMBER: ${{ env.PR_NUMBER }}
+          NEW_MODELS: ${{ steps.extract_models.outputs.new_models }}
+          PR_NUMBER: ${{ steps.extract_models.outputs.pr_number }}
         run: |
           if [[ -z "$JENKINS_TRIGGER" || -z "$JENKINS_USER" || -z "$JENKINS_USER_API" || -z "$JENKINS_TOKEN" ]]; then
             echo "One or more Jenkins environment variables are empty. Aborting."
@@ -114,6 +116,7 @@ jobs:
             --data-urlencode "NEW_MODELS=$NEW_MODELS" \
             --data-urlencode "PR_NUMBER=$PR_NUMBER" \
             --data-urlencode "TOKEN=$JENKINS_TOKEN"
+
       
       - name: Debug Jenkins Variables
         run: |
