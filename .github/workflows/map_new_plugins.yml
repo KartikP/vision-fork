@@ -78,15 +78,6 @@ jobs:
       
       - name: Update PLUGIN_INFO based on label
         run: |
-          if [[ "$has_automerge_web" == "true" ]]; then
-            BS_UID="$(echo '${{ github.event.pull_request.title }}' | sed -E 's/.*\(user:([^)]+)\).*/\1/')"
-            BS_PUBLIC="$(echo '${{ github.event.pull_request.title }}' | sed -E 's/.*\(public:([^)]+)\).*/\1/')"
-            PLUGIN_INFO=$(echo ${{ steps.getplugininfo.outputs.PLUGIN_INFO }} | tr -d "'" | jq -c ". + {user_id: \"$BS_UID\", public: \"$BS_PUBLIC\"}")
-          else
-            PLUGIN_INFO=$(echo ${{ steps.getplugininfo.outputs.PLUGIN_INFO }} | tr -d "'")
-          fi
-
-          # Add pr_number to PLUGIN_INFO
           PR_NUMBER="${{ github.event.number }}"
           PLUGIN_INFO=$(echo "$PLUGIN_INFO" | jq -c ". + {pr_number: \"$PR_NUMBER\"}")
 
