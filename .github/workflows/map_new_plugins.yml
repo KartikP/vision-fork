@@ -63,7 +63,7 @@ jobs:
         run: |
           set -e
           # Execute the Python script and capture the JSON output
-          PLUGIN_INFO=$(python -c "import json; from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info; result = get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_vision'); print(json.dumps(result))")
+          PLUGIN_INFO=$(python -c "from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info; get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_vision')")
           # Set the output correctly without extra quotes
           echo "PLUGIN_INFO=$PLUGIN_INFO" >> $GITHUB_OUTPUT
           # Debug output to verify
