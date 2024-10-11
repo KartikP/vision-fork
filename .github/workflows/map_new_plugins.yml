@@ -26,6 +26,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}  # Ensure we are checking out the PR source branch
           fetch-depth: 0
 
       - name: Set up Python 3.11
