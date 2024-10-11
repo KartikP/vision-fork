@@ -62,13 +62,11 @@ jobs:
         id: getplugininfo
         run: |
           set -e
-          PLUGIN_INFO=$(python -c "
-          import json
-          from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
-          result = get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_vision')
-          print(json.dumps(result))
-          ")
+          # Execute the Python script and capture the JSON output
+          PLUGIN_INFO=$(python -c "import json; from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info; result = get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_vision'); print(json.dumps(result))")
+          # Set the output correctly without extra quotes
           echo "PLUGIN_INFO=$PLUGIN_INFO" >> $GITHUB_OUTPUT
+          # Debug output to verify
           echo "PLUGIN_INFO is $PLUGIN_INFO"
 
       - name: Check if layer mapping needed
