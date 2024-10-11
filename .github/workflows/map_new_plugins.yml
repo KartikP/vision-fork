@@ -69,10 +69,10 @@ jobs:
           # Debug output to verify
           echo "PLUGIN_INFO is $PLUGIN_INFO"
 
-      - name: Check if layer mapping needed
+       - name: Check if layer mapping needed
         id: mappingneeded
         run: |
-          RUN_SCORING=$(jq -r '.run_score' <<< ${{ steps.getpluginfo.outputs.PLUGIN_INFO }})
+          RUN_SCORING=$(echo '${{ steps.getplugininfo.outputs.PLUGIN_INFO }}' | jq -r '.run_score')
           echo "RUN_SCORING=$RUN_SCORING" >> $GITHUB_OUTPUT
           echo "RUN_SCORING is $RUN_SCORING"
       
