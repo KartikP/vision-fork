@@ -75,13 +75,14 @@ jobs:
           RUN_SCORING=$(echo '${{ steps.getplugininfo.outputs.PLUGIN_INFO }}' | jq -r '.run_score')
           echo "RUN_SCORING=$RUN_SCORING" >> $GITHUB_OUTPUT
           echo "RUN_SCORING is $RUN_SCORING"
-      
+      # Add condition for run_scoring=true
       - name: Update PLUGIN_INFO based on label
         run: |
           PR_NUMBER="${{ github.event.number }}"
           PLUGIN_INFO=$(echo "$PLUGIN_INFO" | jq -c ". + {pr_number: \"$PR_NUMBER\"}")
 
           echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
+          echo "PLUGIN_INFO is $PLUGIN_INFO"
       
       - name: Extract new_models and pr_number
         run: |
@@ -90,7 +91,6 @@ jobs:
           PR_NUMBER=$(echo "$PLUGIN_INFO" | jq -r '.pr_number')
           echo "NEW_MODELS=$NEW_MODELS" >> $GITHUB_ENV
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
-
 
       - name: Trigger Jenkins
         env:
@@ -101,7 +101,7 @@ jobs:
           MODEL_LIST: ${{ env.NEW_MODELS }}
           PR_NUMBER: ${{ env.PR_NUMBER }}
         run: |
-          curl -X POST "$MAPPING_JENKINS_TRIGGER" \
+          curl -X POST "$JENKINS_MAPPING_URL" \
             --user "$JENKINS_USER:$JENKINS_USER_API \
             --data-urlencode "NEW_MODELS=$NEW_MODELS" \
             --data-urlencode "PR_NUMBER=$PR_NUMBER" \
