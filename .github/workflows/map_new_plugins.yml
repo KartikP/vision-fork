@@ -10,6 +10,7 @@ on:
     types: [opened, synchronize, reopened, labeled]
 
 jobs:
+  # Trigger Layer Mapping only on web_submissions OR if trigger-mapping label is added to PR
   trigger_layer_mapping:
     name: Trigger Layer Mapping
     runs-on: ubuntu-latest
@@ -50,7 +51,7 @@ jobs:
               pull_number: prNumber,
               per_page: 100,
             });
-            const changedFiles = files.map(f => f.filename).join('|');  # Updated delimiter
+            const changedFiles = files.map(f => f.filename).join(' ');
             core.setOutput('files', changedFiles);
 
       - name: Set CHANGED_FILES
@@ -65,21 +66,17 @@ jobs:
           PLUGIN_INFO=$(python -c "from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info; get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_vision')")
           # Set the output correctly without extra quotes
           echo "PLUGIN_INFO=$PLUGIN_INFO" >> $GITHUB_OUTPUT
-          # Also export as environment variable for subsequent steps
-          echo "PLUGIN_INFO=$PLUGIN_INFO" >> $GITHUB_ENV
           # Debug output to verify
           echo "PLUGIN_INFO is $PLUGIN_INFO"
-
+      
       - name: Check if layer mapping needed
         id: mappingneeded
         run: |
-          # Validate the JSON first
-          echo "${PLUGIN_INFO}" | jq empty
-          # Extract the run_score using a here-string to avoid quoting issues
-          RUN_SCORING=$(jq -r '.run_score' <<< "${PLUGIN_INFO}")
+          RUN_SCORING=$(echo '${{ steps.getplugininfo.outputs.PLUGIN_INFO }}' | jq -r '.run_score')
           echo "RUN_SCORING=$RUN_SCORING" >> $GITHUB_OUTPUT
           echo "RUN_SCORING is $RUN_SCORING"
-
+      
+      # Add condition for run_scoring=true
       - name: Update PLUGIN_INFO based on label
         run: |
           set -e
@@ -101,24 +98,23 @@ jobs:
       - name: Trigger Jenkins
         env:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
-          JENKINS_USER_API: ${{ secrets.JENKINS_USER_API }}  # Removed extra $
+          JENKINS_USER_API: ${{ secrets.JENKINS_USER_API }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
           MODEL_LIST: ${{ env.NEW_MODELS }}
           PR_NUMBER: ${{ env.PR_NUMBER }}
         run: |
-          # Ensure required variables are set
           if [[ -z "$JENKINS_TRIGGER" || -z "$JENKINS_USER" || -z "$JENKINS_USER_API" || -z "$JENKINS_TOKEN" ]]; then
             echo "One or more Jenkins environment variables are empty. Aborting."
             exit 1
           fi
-
-          # Execute the curl command with proper quoting
+      
           curl -X POST "$JENKINS_TRIGGER" \
             --user "$JENKINS_USER:$JENKINS_USER_API" \
             --data-urlencode "NEW_MODELS=$MODEL_LIST" \
             --data-urlencode "PR_NUMBER=$PR_NUMBER" \
             --data-urlencode "TOKEN=$JENKINS_TOKEN"
+      
       - name: Debug Jenkins Variables
         run: |
           echo "JENKINS_TRIGGER: $JENKINS_TRIGGER"
@@ -127,4 +123,3 @@ jobs:
           echo "JENKINS_TOKEN: $JENKINS_TOKEN"
           echo "MODEL_LIST: $MODEL_LIST"
           echo "PR_NUMBER: $PR_NUMBER"
-
