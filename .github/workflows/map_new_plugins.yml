@@ -95,6 +95,8 @@ jobs:
           JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
           NEW_MODELS: ${{ env.NEW_MODELS }}
+          SOURCE_REPO: ${{ github.event.pull_request.head.repo.clone_url }}
+          SOURCE_BRANCH: ${{ github.head_ref }}
           PR_NUMBER: ${{ env.PR_NUMBER }}
         run: |
           if [[ -z "$JENKINS_TRIGGER" || -z "$JENKINS_USER" || -z "$JENKINS_USER_API" || -z "$JENKINS_TOKEN" ]]; then
@@ -106,6 +108,8 @@ jobs:
             --user "$JENKINS_USER:$JENKINS_USER_API" \
             --data-urlencode "NEW_MODELS=$NEW_MODELS" \
             --data-urlencode "PR_NUMBER=$PR_NUMBER" \
+            --data-urlencode "SOURCE_REPO=$SOURCE_REPO" \
+            --data-urlencode "SOURCE_BRANCH=$SOURCE_BRANCH" \
             --data-urlencode "TOKEN=$JENKINS_TOKEN"
 
       - name: Debug Jenkins Variables
