@@ -38,11 +38,25 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install ".[test]"
 
-      - name: Save changed files to env var
+      - name: Get Changed Files
+        id: changed_files
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = ${{ github.event.number }};
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+            const changedFiles = files.map(f => f.filename).join(' ');
+            core.setOutput('files', changedFiles);
+
+      - name: Set CHANGED_FILES
         run: |
-          git fetch origin refs/pull/${{ github.event.number }}/head
-          MERGE_COMMIT=$(git log --format='%H %P' --all | grep "$(git rev-parse FETCH_HEAD)\$" | cut -f1 -d' ')
-          echo "CHANGED_FILES=$(git diff --name-only origin/master~1 $MERGE_COMMIT | tr '\n' ' ')"  >> $GITHUB_ENV
+          echo "CHANGED_FILES=${{ steps.changed_files.outputs.files }}" >> $GITHUB_ENV
 
       - name: Get plugin info
         id: getplugininfo
