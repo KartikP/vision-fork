@@ -83,7 +83,7 @@ jobs:
           PR_NUMBER="${{ github.event.number }}"
           PLUGIN_INFO=$(echo "$PLUGIN_INFO" | jq -c ". + {pr_number: \"$PR_NUMBER\"}")
 
-          echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_ENV
+          echo "PLUGIN_INFO=${PLUGIN_INFO}" >> $GITHUB_OUTPUT
           echo "PLUGIN_INFO is $PLUGIN_INFO"
 
       - name: Extract new_models and pr_number
@@ -92,8 +92,8 @@ jobs:
           PLUGIN_INFO="${PLUGIN_INFO}"
           NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models')
           PR_NUMBER=$(echo "$PLUGIN_INFO" | jq -r '.pr_number')
-          echo "NEW_MODELS=$NEW_MODELS" >> $GITHUB_ENV
-          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "NEW_MODELS=$NEW_MODELS" >> $GITHUB_OUTPUT
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Trigger Jenkins
         env:
@@ -101,7 +101,7 @@ jobs:
           JENKINS_USER_API: ${{ secrets.JENKINS_USER_API }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_MAPPING_TOKEN }}
           JENKINS_TRIGGER: ${{ secrets.JENKINS_MAPPING_URL }}
-          MODEL_LIST: ${{ env.NEW_MODELS }}
+          NEW_MODELS: ${{ env.NEW_MODELS }}
           PR_NUMBER: ${{ env.PR_NUMBER }}
         run: |
           if [[ -z "$JENKINS_TRIGGER" || -z "$JENKINS_USER" || -z "$JENKINS_USER_API" || -z "$JENKINS_TOKEN" ]]; then
@@ -111,7 +111,7 @@ jobs:
       
           curl -X POST "$JENKINS_TRIGGER" \
             --user "$JENKINS_USER:$JENKINS_USER_API" \
-            --data-urlencode "NEW_MODELS=$MODEL_LIST" \
+            --data-urlencode "NEW_MODELS=$NEW_MODELS" \
             --data-urlencode "PR_NUMBER=$PR_NUMBER" \
             --data-urlencode "TOKEN=$JENKINS_TOKEN"
       
@@ -121,5 +121,5 @@ jobs:
           echo "JENKINS_USER: $JENKINS_USER"
           echo "JENKINS_USER_API: $JENKINS_USER_API"
           echo "JENKINS_TOKEN: $JENKINS_TOKEN"
-          echo "MODEL_LIST: $MODEL_LIST"
+          echo "NEW_MODELS: $NEW_MODELS"
           echo "PR_NUMBER: $PR_NUMBER"
