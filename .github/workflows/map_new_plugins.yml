@@ -80,7 +80,7 @@ jobs:
         run: |
           set -e
           PLUGIN_INFO="${PLUGIN_INFO}"
-          NEW_MODELS=$(echo "$PLUGIN_INFO" | jq -r '.new_models')
+          NEW_MODELS=$(echo '${{ steps.getplugininfo.outputs.PLUGIN_INFO }}' | jq -r '.new_models')
           PR_NUMBER="${{ github.event.number }}"
           echo "NEW_MODELS=$NEW_MODELS"
           echo "PR_NUMBER=$PR_NUMBER"
