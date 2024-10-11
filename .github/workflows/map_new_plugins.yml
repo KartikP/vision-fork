@@ -61,13 +61,21 @@ jobs:
       - name: Get plugin info
         id: getplugininfo
         run: |
-          echo "PLUGIN_INFO='$(python -c 'from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info; get_scoring_info("${{ env.CHANGED_FILES }}", "brainscore_vision")')'"  >> $GITHUB_OUTPUT
+          set -e
+          PLUGIN_INFO=$(python -c "
+          import json
+          from brainscore_core.plugin_management.parse_plugin_changes import get_scoring_info
+          result = get_scoring_info('${{ env.CHANGED_FILES }}', 'brainscore_vision')
+          print(json.dumps(result))
+          ")
+          echo "PLUGIN_INFO=$PLUGIN_INFO" >> $GITHUB_OUTPUT
           echo "PLUGIN_INFO is $PLUGIN_INFO"
 
       - name: Check if layer mapping needed
         id: mappingneeded
         run: |
-          echo "RUN_SCORING=$(jq -r '.run_score' <<< ${{ steps.getpluginfo.outputs.PLUGIN_INFO }})" >> $GITHUB_OUTPUT
+          RUN_SCORING=$(echo "${{ steps.getplugininfo.outputs.PLUGIN_INFO }}" | jq -r '.run_score')
+          echo "RUN_SCORING=$RUN_SCORING" >> $GITHUB_OUTPUT
           echo "RUN_SCORING is $RUN_SCORING"
       
       - name: Update PLUGIN_INFO based on label and add PR number
